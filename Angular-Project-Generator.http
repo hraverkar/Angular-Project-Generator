@@ -1,0 +1,6 @@
+@Angular-Project-Generator_HostAddress = http://localhost:5115
+@Angular_Project_Generator_HostAddress = http://localhost:5115
+
+POST {{Angular-Project-Generator_HostAddress}}/download-app
+
+###
