@@ -1,6 +1,8 @@
 ﻿
 using Angular_Project_Generator.Enums;
 using Angular_Project_Generator.Models.Model;
+using Azure;
+using Azure.Storage.Blobs;
 using System.Diagnostics;
 using System.IO.Compression;
 
@@ -12,15 +14,18 @@ namespace Angular_Project_Generator.Models.Helper
         public string Pwd { get; set; }
         public NgCommandBuilder CommandBuilder { get; set; }
 
+        public string BlobConnectionString = "DefaultEndpointsProtocol=https;AccountName=schoolblogblobst;AccountKey=UgfmCHYD+m0YbOPrOcLAWzA8RwZ+67zi2CBlScciDAG+Ik33pjydyeOf5sn/1hxD0Hmu7cnNAsGy+AStmqCJew==;EndpointSuffix=core.windows.net";
+        public string BlobContainerName = "photostore";
         public AppBuilder(AppConfiguration nodeConfiguration)
         {
             Configuration = nodeConfiguration;
             CommandBuilder = new NgCommandBuilder();
         }
 
-        public async Task<bool> GenerateProject(ProjectModel projectModel, string folderPath)
+        public async Task<Tuple<bool, string>> GenerateProject(ProjectModel projectModel, string folderPath)
         {
             var isSuccessful = false;
+            var newZipName = string.Empty;
             try
             {
                 CreateApp();
@@ -42,10 +47,11 @@ namespace Angular_Project_Generator.Models.Helper
                 if (File.Exists(zipFilePath))
                 {
                     File.Delete(zipFilePath);
-                    
+
                     Console.WriteLine($"Deleted existing zip file: {zipFilePath}");
                 }
                 CreateZipArchive(folderPath, zipFilePath);
+                newZipName = await UploadZipToBlobStorageAsync(zipFileName, zipFilePath);
                 Console.WriteLine("Zip archive created successfully.");
                 isSuccessful = true;
             }
@@ -58,7 +64,7 @@ namespace Angular_Project_Generator.Models.Helper
             {
                 this.CommandBuilder.Reset();
             }
-            return isSuccessful;
+            return Tuple.Create(isSuccessful, newZipName);
         }
 
         private static void CreateZipArchive(string folderPath, string zipFilepath)
@@ -182,6 +188,37 @@ namespace Angular_Project_Generator.Models.Helper
         {
             var command = CommandAndToken.CreateApp.Replace(Tokens.AppName, Configuration.Name);
             CommandBuilder.Append(command);
+        }
+        private async Task<string> UploadZipToBlobStorageAsync(string zipFileName, string zipPath)
+        {
+            byte[] zipFileContent = File.ReadAllBytes(zipPath);
+            var blobServiceClient = new BlobServiceClient(BlobConnectionString);
+            var blobContainerClient = blobServiceClient.GetBlobContainerClient(BlobContainerName);
+            await blobContainerClient.CreateIfNotExistsAsync();
+            var newZipName = Guid.NewGuid() + "_" + zipFileName;
+            var blobClient = blobContainerClient.GetBlobClient(newZipName);
+            await using (var memoryStream = new MemoryStream(zipFileContent))
+            {
+                await blobClient.UploadAsync(memoryStream, true);
+            }
+            return newZipName;
+        }
+        public async Task<byte[]> GetFileFromBlob(string fileName)
+        {
+            try
+            {
+                var blobServiceClient = new BlobServiceClient(BlobConnectionString);
+                var blobContainerClient = blobServiceClient.GetBlobContainerClient(BlobContainerName);
+                var blobClient = blobContainerClient.GetBlobClient(fileName);
+                using MemoryStream memoryStream = new MemoryStream();
+                await blobClient.DownloadToAsync(memoryStream);
+                return memoryStream.ToArray();
+            }
+            catch (RequestFailedException ex)
+            {
+                Console.WriteLine($"Failed to retrieve file '{fileName}' from Azure Blob Storage: {ex.Message}");
+                return null;
+            }
         }
     }
 }
