@@ -31,11 +31,18 @@ if (app.Environment.IsDevelopment())
 }
 
 
-app.MapPost("/download-app", async (AppConfiguration appConfiguration, IGenerateProjectService generateProjectService) =>
+app.MapPost("/download-app", async (AppConfiguration appConfiguration,IGenerateProjectService generateProjectService) =>
 {
-    var response = await generateProjectService.GenerateAngularProject(appConfiguration);
+    var response = await generateProjectService.DownloadAngularProject(appConfiguration);
     return Results.Created("DonwloadApp", response);
 }).WithName("download-app")
+.WithOpenApi();
+
+app.MapPost("/generate-app", async (AppConfiguration appConfiguration,IGenerateProjectService generateProjectService) =>
+{
+    var response = await generateProjectService.GenerateAngularProject(appConfiguration);
+    return Results.Created("generateApp", response);
+}).WithName("generate-app")
 .WithOpenApi();
 
 app.UseCors("CorsPolicy");
