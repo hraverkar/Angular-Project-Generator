@@ -1,8 +1,9 @@
-﻿namespace Angular_Project_Generator.Models.Model
+﻿
+namespace Angular_Project_Generator.Models.Model
 {
     public class ProjectModel
     {
-        public Dictionary<string, object> Files { get; set; } = new Dictionary<string, object>();
+        public Dictionary<string, string> Files { get; set; } = new Dictionary<string, string>();
         public string Title { get; set; }
         public string Description { get; set; }
         public string Template { get; set; }
