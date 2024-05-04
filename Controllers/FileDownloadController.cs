@@ -23,7 +23,7 @@ namespace Angular_Project_Generator.Controllers
         public async Task<IActionResult> GenerateApp([FromBody] AppConfiguration appConfiguration)
         {
             var response = await _generateProjectService.GenerateAngularProject(appConfiguration);
-            return (IActionResult)response;
+            return Ok(response);
         }
     }
 }

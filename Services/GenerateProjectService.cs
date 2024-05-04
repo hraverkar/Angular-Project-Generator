@@ -14,8 +14,7 @@ namespace Angular_Project_Generator.Services
             try
             {
                 var builder = new AppBuilder(request);
-                _logger.LogInformation($"****** Generating New Project : {request.Name}******");
-
+                _logger.LogInformation($"****** Generating New Project : {request.Name} ******");
                 // Delete existing folder if it exists
                 if (Directory.Exists(folderPath))
                 {

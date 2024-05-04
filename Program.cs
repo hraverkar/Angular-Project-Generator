@@ -30,20 +30,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-
-app.MapPost("/download-app", async (AppConfiguration appConfiguration, IGenerateProjectService generateProjectService) =>
-{
-    var response = await generateProjectService.DownloadAngularProject(appConfiguration);
-    return response;
-});
-
-app.MapPost("/generate-app", async (AppConfiguration appConfiguration, IGenerateProjectService generateProjectService) =>
-{
-    var res = await generateProjectService.GenerateAngularProject(appConfiguration);
-    return res;
-}).WithName("generate-app")
-.WithOpenApi();
-
 app.UseCors("CorsPolicy");
 
 app.UseHttpsRedirection();

@@ -9,9 +9,6 @@ namespace Angular_Project_Generator.Models.Helper
     {
         public AppConfiguration Configuration { get; set; }
         public NgCommandBuilder CommandBuilder { get; set; }
-
-        public string BlobConnectionString = "DefaultEndpointsProtocol=https;AccountName=schoolblogblobst;AccountKey=UgfmCHYD+m0YbOPrOcLAWzA8RwZ+67zi2CBlScciDAG+Ik33pjydyeOf5sn/1hxD0Hmu7cnNAsGy+AStmqCJew==;EndpointSuffix=core.windows.net";
-        public string BlobContainerName = "photostore";
         public AppBuilder(AppConfiguration nodeConfiguration)
         {
             Configuration = nodeConfiguration;
@@ -104,39 +101,6 @@ namespace Angular_Project_Generator.Models.Helper
                 }
             }
         }
-
-        //private static async Task<FileContentResult> CreateZipArchive(string folderPath, string zipFilepath, string zipFileName)
-        //{
-        //    try
-        //    {
-        //        ZipFile.CreateFromDirectory(folderPath, zipFilepath);
-        //        using (var memoryStream = new MemoryStream())
-        //        {
-        //            // Create a new zip archive
-        //            using (var zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
-        //            {
-        //                var fileInfo = new FileInfo(zipFilepath);
-        //                // Create a new entry in the zip archive for each file
-        //                var entry = zipArchive.CreateEntry(fileInfo.Name);
-
-        //                // Write the file contents into the entry
-        //                using (var entryStream = entry.Open())
-        //                using (var fileStream = new FileStream(zipFilepath, FileMode.Open, FileAccess.Read))
-        //                {
-        //                    fileStream.CopyTo(entryStream);
-        //                }
-        //            }
-        //            memoryStream.Seek(0, SeekOrigin.Begin);
-        //            return new FileContentResult(memoryStream.ToArray(), "application/zip") { FileDownloadName = zipFileName };
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine(ex.Message);
-        //    }
-        //    return null;
-        //}
-
 
         public string[] GetProjectStructure(string projectName, string dirPath, string[] arrayOfFiles, ProjectModel projectModel)
         {
