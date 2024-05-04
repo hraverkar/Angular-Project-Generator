@@ -1,13 +1,14 @@
 ﻿using Angular_Project_Generator.Models.Helper;
 using Angular_Project_Generator.Models.Model;
 using Angular_Project_Generator.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Angular_Project_Generator.Services
 {
     public class GenerateProjectService(ILogger<GenerateProjectService> logger) : IGenerateProjectService
     {
         private readonly ILogger<GenerateProjectService> _logger = logger;
-        public async Task<byte[]> DownloadAngularProject(AppConfiguration request)
+        public async Task<FileContentResult> DownloadAngularProject(AppConfiguration request)
         {
             string folderPath = Path.Combine(Directory.GetCurrentDirectory(), request.Name);
             try
@@ -26,7 +27,7 @@ namespace Angular_Project_Generator.Services
                 {
                     Title = request.Name,
                     Description = "Angular Generator Project",
-                    Template = "Angular-CLI",
+                    Template = "angular-cli",
                     Tags = ["stackblitz", "sdk"]
                 };
 
@@ -35,9 +36,7 @@ namespace Angular_Project_Generator.Services
                 {
                     throw new Exception("Invalid request...");
                 }
-
-                var resultFile = await builder.GetFileFromBlob(result.Item2);
-                return result.Item3;
+                return result.Item2;
             }
             catch (Exception ex)
             {

@@ -35,8 +35,7 @@ app.MapPost("/download-app", async (AppConfiguration appConfiguration, IGenerate
 {
     var response = await generateProjectService.DownloadAngularProject(appConfiguration);
     return response;
-}).WithName("download-app")
-.WithOpenApi();
+});
 
 app.MapPost("/generate-app", async (AppConfiguration appConfiguration, IGenerateProjectService generateProjectService) =>
 {

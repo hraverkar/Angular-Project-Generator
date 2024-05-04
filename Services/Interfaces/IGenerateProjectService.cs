@@ -5,7 +5,7 @@ namespace Angular_Project_Generator.Services.Interfaces
 {
     public interface IGenerateProjectService
     {
-        Task<byte[]> DownloadAngularProject(AppConfiguration request);
+        Task<FileContentResult> DownloadAngularProject(AppConfiguration request);
         Task<ProjectModel> GenerateAngularProject(AppConfiguration request);
     }
 }

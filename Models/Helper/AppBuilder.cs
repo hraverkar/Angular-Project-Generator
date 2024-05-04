@@ -1,8 +1,4 @@
-﻿
-using Angular_Project_Generator.Enums;
-using Angular_Project_Generator.Models.Model;
-using Azure;
-using Azure.Storage.Blobs;
+﻿using Angular_Project_Generator.Models.Model;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using System.IO.Compression;
@@ -22,64 +18,124 @@ namespace Angular_Project_Generator.Models.Helper
             CommandBuilder = new NgCommandBuilder();
         }
 
-        public async Task<Tuple<bool, string, byte[]>> GenerateProject(ProjectModel projectModel, string folderPath)
-{
-    var isSuccessful = false;
-    var newZipName = string.Empty;
-    byte[] blob = new byte[0];
-    var zipFileName = string.Empty;
-    var zipFilePath = string.Empty;
-    try
-    {
-        CreateApp();
-        CommandBuilder.Append($"cd {Configuration.Name}");
-        await GenerateApplication(this.Configuration.NodeConfiguration);
-        CommandBuilder.Append("cd ..");
-        var completeCommand = CommandBuilder.GetCommand();
-        Console.WriteLine(completeCommand.ToString());
-        await processSync(completeCommand);
-
-        if (projectModel != null)
+        public async Task<Tuple<bool, FileContentResult>> GenerateProject(ProjectModel projectModel, string folderPath)
         {
-            GetProjectStructure(this.Configuration.Name, this.Configuration.Name, null, projectModel);
+            var isSuccessful = false;
+            var zipFileName = string.Empty;
+            var zipFilePath = string.Empty;
+            try
+            {
+                CreateApp();
+                CommandBuilder.Append($"cd {Configuration.Name}");
+                await GenerateApplication(this.Configuration.NodeConfiguration);
+                CommandBuilder.Append("cd ..");
+                var completeCommand = CommandBuilder.GetCommand();
+                Console.WriteLine(completeCommand.ToString());
+                await processSync(completeCommand);
+
+                if (projectModel != null)
+                {
+                    GetProjectStructure(this.Configuration.Name, this.Configuration.Name, null, projectModel);
+                }
+
+                zipFileName = this.Configuration.Name + ".zip";
+                zipFilePath = Path.Combine(Directory.GetCurrentDirectory(), zipFileName);
+
+                // Check if the zip file exists and delete it if it does
+                if (File.Exists(zipFilePath))
+                {
+                    File.Delete(zipFilePath);
+                    Console.WriteLine($"Deleted existing zip file: {zipFilePath}");
+                }
+
+                var result = await CreateZipArchive(folderPath, zipFileName);
+                Console.WriteLine("Zip archive created successfully.");
+                isSuccessful = true;
+                return Tuple.Create(isSuccessful, result);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+            finally
+            {
+                CommandBuilder.Reset();
+                if (File.Exists(zipFilePath))
+                {
+                    File.Delete(zipFilePath);
+                }
+            }
+            return null;
         }
 
-        zipFileName = this.Configuration.Name + ".zip";
-        zipFilePath = Path.Combine(Directory.GetCurrentDirectory(), zipFileName);
-
-        // Check if the zip file exists and delete it if it does
-        if (File.Exists(zipFilePath))
+        private static async Task<FileContentResult> CreateZipArchive(string folderPath, string zipFileName)
         {
-            File.Delete(zipFilePath);
-            Console.WriteLine($"Deleted existing zip file: {zipFilePath}");
+            try
+            {
+                // Create the archive in memory
+                using (var memoryStream = new MemoryStream())
+                {
+                    using (var zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
+                    {
+                        // Add files asynchronously
+                        await AddFilesToZipArchiveAsync(folderPath, zipArchive);
+                    }
+
+                    memoryStream.Seek(0, SeekOrigin.Begin);
+                    return new FileContentResult(memoryStream.ToArray(), "application/zip") { FileDownloadName = zipFileName };
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            return null;
         }
 
-        CreateZipArchive(folderPath, zipFilePath);
-        blob = ZipFolder(zipFilePath);
-        newZipName = await UploadZipToBlobStorageAsync(zipFileName, zipFilePath);
-        Console.WriteLine("Zip archive created successfully.");
-        isSuccessful = true;
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine(ex.ToString());
-    }
-    finally
-    {
-        CommandBuilder.Reset();
-        if (File.Exists(zipFilePath))
+        private static async Task AddFilesToZipArchiveAsync(string folderPath, ZipArchive archive)
         {
-            File.Delete(zipFilePath);
+            foreach (var file in Directory.EnumerateFiles(folderPath, "*", SearchOption.AllDirectories))
+            {
+                var entry = archive.CreateEntry(Path.GetRelativePath(folderPath, file));
+                using (var fileStream = File.OpenRead(file))
+                using (var entryStream = entry.Open())
+                {
+                    await fileStream.CopyToAsync(entryStream);
+                }
+            }
         }
-    }
-    return Tuple.Create(isSuccessful, newZipName, blob);
-}
 
+        //private static async Task<FileContentResult> CreateZipArchive(string folderPath, string zipFilepath, string zipFileName)
+        //{
+        //    try
+        //    {
+        //        ZipFile.CreateFromDirectory(folderPath, zipFilepath);
+        //        using (var memoryStream = new MemoryStream())
+        //        {
+        //            // Create a new zip archive
+        //            using (var zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
+        //            {
+        //                var fileInfo = new FileInfo(zipFilepath);
+        //                // Create a new entry in the zip archive for each file
+        //                var entry = zipArchive.CreateEntry(fileInfo.Name);
 
-        private static void CreateZipArchive(string folderPath, string zipFilepath)
-        {
-            ZipFile.CreateFromDirectory(folderPath, zipFilepath);
-        }
+        //                // Write the file contents into the entry
+        //                using (var entryStream = entry.Open())
+        //                using (var fileStream = new FileStream(zipFilepath, FileMode.Open, FileAccess.Read))
+        //                {
+        //                    fileStream.CopyTo(entryStream);
+        //                }
+        //            }
+        //            memoryStream.Seek(0, SeekOrigin.Begin);
+        //            return new FileContentResult(memoryStream.ToArray(), "application/zip") { FileDownloadName = zipFileName };
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine(ex.Message);
+        //    }
+        //    return null;
+        //}
 
 
         public string[] GetProjectStructure(string projectName, string dirPath, string[] arrayOfFiles, ProjectModel projectModel)
@@ -197,45 +253,6 @@ namespace Angular_Project_Generator.Models.Helper
         {
             var command = CommandAndToken.CreateApp.Replace(Tokens.AppName, Configuration.Name);
             CommandBuilder.Append(command);
-        }
-        private async Task<string> UploadZipToBlobStorageAsync(string zipFileName, string zipPath)
-        {
-            byte[] zipFileContent = File.ReadAllBytes(zipPath);
-            var blobServiceClient = new BlobServiceClient(BlobConnectionString);
-            var blobContainerClient = blobServiceClient.GetBlobContainerClient(BlobContainerName);
-            await blobContainerClient.CreateIfNotExistsAsync();
-            var newZipName = Guid.NewGuid() + "_" + zipFileName;
-            var blobClient = blobContainerClient.GetBlobClient(newZipName);
-            using (var memoryStream = new MemoryStream(zipFileContent))
-            {
-                await blobClient.UploadAsync(memoryStream, true);
-            }
-            return newZipName;
-        }
-        public async Task<byte[]> GetFileFromBlob(string fileName)
-        {
-            try
-            {
-                var blobServiceClient = new BlobServiceClient(BlobConnectionString);
-                var blobContainerClient = blobServiceClient.GetBlobContainerClient(BlobContainerName);
-                var blobClient = blobContainerClient.GetBlobClient(fileName);
-                using (MemoryStream memoryStream = new MemoryStream())
-                {
-                    await blobClient.DownloadToAsync(memoryStream);
-                    return memoryStream.ToArray();
-                }
-            }
-            catch (RequestFailedException ex)
-            {
-                Console.WriteLine($"Failed to retrieve file '{fileName}' from Azure Blob Storage: {ex.Message}");
-                return null;
-            }
-        }
-
-        private static byte[] ZipFolder(string folderPath)
-        {
-            byte[] blob = File.ReadAllBytes(folderPath);
-            return blob;
         }
     }
 }
