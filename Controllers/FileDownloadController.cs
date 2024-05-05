@@ -39,5 +39,20 @@ namespace Angular_Project_Generator.Controllers
             }
             return Ok(response);
         }
+
+        [HttpGet("say-hello")]
+        public async Task<IActionResult> Hello([FromQuery] string name)
+        {
+            if (name == null)
+            {
+                return BadRequest("App configuration is null.");
+            }
+            var response = $"Hello {name}, Hope you are doing great.";
+            if (response == null)
+            {
+                return NotFound("Failed to download project.");
+            }
+            return Ok(response);
+        }
     }
 }
