@@ -15,14 +15,28 @@ namespace Angular_Project_Generator.Controllers
         [HttpPost("downloadApp")]
         public async Task<IActionResult> DownloadApp([FromBody] AppConfiguration appConfiguration)
         {
+            if (appConfiguration == null)
+            {
+                return BadRequest("App configuration is null.");
+            }
+
             var res = await _generateProjectService.DownloadAngularProject(appConfiguration);
-            return res;
+
+            return res == null ? NotFound("Failed to download project.") : res;
         }
 
         [HttpPost("generateApp")]
         public async Task<IActionResult> GenerateApp([FromBody] AppConfiguration appConfiguration)
         {
+            if (appConfiguration == null)
+            {
+                return BadRequest("App configuration is null.");
+            }
             var response = await _generateProjectService.GenerateAngularProject(appConfiguration);
+            if (response == null)
+            {
+                return NotFound("Failed to download project.");
+            }
             return Ok(response);
         }
     }
