@@ -28,7 +28,7 @@ namespace Angular_Project_Generator.Models.Helper
                 CommandBuilder.Append("cd ..");
                 var completeCommand = CommandBuilder.GetCommand();
                 Console.WriteLine(completeCommand.ToString());
-                await processSync(completeCommand);
+                await ProcessSync(completeCommand);
 
                 if (projectModel != null)
                 {
@@ -132,7 +132,7 @@ namespace Angular_Project_Generator.Models.Helper
             return fileList.ToArray();
         }
 
-        private async Task processSync(string completeCommand)
+        private async Task ProcessSync(string completeCommand)
         {
             try
             {
