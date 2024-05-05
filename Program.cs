@@ -13,7 +13,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy",
-        builder => builder.AllowAnyOrigin()
+        builder => builder.WithOrigins("http://localhost:4200", "https://ag-generator.vercel.app", "https://ag-generator.netlify.app")
         .AllowAnyMethod()
         .AllowAnyHeader());
 });
