@@ -89,7 +89,7 @@ namespace Angular_Project_Generator.Services
             finally
             {
                 // Clean up: Delete the ZIP file
-                if (File.Exists(zipFilePath))
+                if (Directory.Exists(folderPath))
                 {
                     File.Delete(zipFilePath);
                     Directory.Delete(folderPath, true);
