@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "apis1": {
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.ApiManagement/service/Angular-Project-Generatorapi/apis/Angular-Project-Generator",
+      "type": "apis.azure"
+    }
+  }
+}
